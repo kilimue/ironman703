@@ -203,7 +203,7 @@ html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--tex
 .wk-vol { font-family:var(--mono); font-size:9px; color:var(--yellow); }
 .wk-chevron { font-size:10px; color:var(--muted); transition:transform 0.2s; }
 .wk-chevron.open { transform:rotate(180deg); }
-.wk-body { display:none; }
+.wk-body { display:none; overflow:hidden; }
 .wk-body.open { display:block; }
 
 .day-row {
@@ -483,6 +483,11 @@ html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--tex
 </nav>
 
 <div class="toast" id="toast"></div>
+
+<!-- Detail Modal -->
+<div id="detailModal" style="display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;">
+  <div id="detailModalContent" style="display:flex;flex-direction:column;height:100%;"></div>
+</div>
 
 <script>
 // =============================================
@@ -905,6 +910,10 @@ function showPage(id, btn) {
   if(btn) btn.classList.add('active');
   if(id==='progress') renderProgress();
   if(id==='log') renderLogList();
+  // Only render plan if container is empty (first visit)
+  if(id==='plan' && !document.getElementById('planWeeksContainer').children.length) {
+    showPhase(currentPhaseIdx);
+  }
 }
 
 // =============================================
@@ -1073,14 +1082,16 @@ function showPhase(idx) {
     tab.style.color = i === idx ? 'white' : 'var(--muted)';
   });
 
-  // Render weeks
+  // Only re-render weeks if phase changed
   const container = document.getElementById('planWeeksContainer');
+  if(container.dataset.phase === String(idx)) return;
+  container.dataset.phase = String(idx);
   container.innerHTML = '';
 
   phase.weeks.forEach((week, wi) => {
     const div = document.createElement('div');
     div.className = 'week-card';
-    
+
     let daysHTML = '';
     week.days.forEach(day => {
       const d = DISC[day.disc] || DISC.rest;
@@ -1093,36 +1104,39 @@ function showPhase(idx) {
         </div>`;
     });
 
+    const isOpen = wi === 0;
     div.innerHTML = `
-      <div class="wk-header" onclick="toggleWeek(this)">
+      <div class="wk-header">
         <span class="wk-num">WOCHE ${week.num}</span>
         <span class="wk-title">${week.title}</span>
         <span class="wk-vol">${week.vol}</span>
-        <span class="wk-chevron">▼</span>
+        <span class="wk-chevron ${isOpen ? 'open' : ''}">▼</span>
       </div>
-      <div class="wk-body${wi===0?' open':''}">
+      <div class="wk-body ${isOpen ? 'open' : ''}">
         ${daysHTML}
       </div>`;
+
+    // Attach toggle via addEventListener to avoid any inline handler issues
+    div.querySelector('.wk-header').addEventListener('click', function(e) {
+      e.stopPropagation();
+      const body = this.nextElementSibling;
+      const ch = this.querySelector('.wk-chevron');
+      const nowOpen = body.classList.contains('open');
+      body.classList.toggle('open', !nowOpen);
+      ch.classList.toggle('open', !nowOpen);
+    });
+
     container.appendChild(div);
   });
 }
 
-function toggleWeek(header) {
-  const body = header.nextElementSibling;
-  const ch = header.querySelector('.wk-chevron');
-  body.classList.toggle('open');
-  ch.classList.toggle('open');
-}
+
 
 function showDayDetail(phaseIdx, weekIdx, dayD) {
   const week = PHASES[phaseIdx].weeks[weekIdx];
   const workout = week.days.find(d=>d.d===dayD);
   if(!workout) return;
-  // switch to today view temporarily? Or show modal — keep it simple: jump to today
-  showPage('today', document.querySelector('.nav-btn'));
-  // re-render with this workout
   const disc = DISC[workout.disc];
-  const container = document.getElementById('todayWorkoutContainer');
   let intervalsHTML = '<div class="intervals">';
   workout.intervals.forEach(iv => {
     intervalsHTML += `<div class="interval-row">
@@ -1132,23 +1146,33 @@ function showDayDetail(phaseIdx, weekIdx, dayD) {
     </div>`;
   });
   intervalsHTML += '</div>';
-
-  container.innerHTML = `
-    <div class="workout-card animate">
-      <div class="wc-stripe" style="background:${disc.color}"></div>
-      <div class="wc-header">
-        <span class="wc-icon">${disc.icon}</span>
-        <div class="wc-meta">
-          <div class="wc-type" style="color:${disc.color}">Woche ${week.num} · ${dayD}</div>
-          <div class="wc-name">${workout.name}</div>
+  document.getElementById('detailModalContent').innerHTML = `
+    <div style="background:var(--panel2);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <button onclick="closeDetailModal()" style="background:none;border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:8px 14px;cursor:pointer;letter-spacing:1px;">← ZURÜCK</button>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;">WOCHE ${week.num} · ${dayD}</span>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:40px;">
+      <div class="workout-card" style="margin:12px;">
+        <div class="wc-stripe" style="background:${disc.color}"></div>
+        <div class="wc-header">
+          <span class="wc-icon">${disc.icon}</span>
+          <div class="wc-meta">
+            <div class="wc-type" style="color:${disc.color}">${disc.label}</div>
+            <div class="wc-name">${workout.name}</div>
+          </div>
+          <span class="wc-duration">${workout.dur}</span>
         </div>
-        <span class="wc-duration">${workout.dur}</span>
-      </div>
-      <div class="wc-body">
-        <div class="wc-desc">${workout.desc}</div>
-        ${intervalsHTML}
+        <div class="wc-body">
+          <div class="wc-desc">${workout.desc}</div>
+          ${intervalsHTML}
+        </div>
       </div>
     </div>`;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').style.display = 'none';
 }
 
 // =============================================
@@ -1178,24 +1202,60 @@ function addLog() {
   updateStats();
 }
 
+function deleteLog(idx) {
+  if(!confirm('Einheit wirklich löschen?')) return;
+  logs.splice(idx, 1);
+  saveLogs();
+  renderLogList();
+  updateStats();
+  showToast('GELÖSCHT');
+}
+
+function editLog(idx) {
+  const l = logs[idx];
+  const d = DISC[l.disc] || DISC.rest;
+  // Fill form with existing values
+  document.getElementById('logDisc').value = l.disc;
+  document.getElementById('logKm').value = l.km || '';
+  document.getElementById('logMin').value = l.min || '';
+  document.getElementById('logNote').value = l.note || '';
+  // Remove the entry so re-saving replaces it
+  logs.splice(idx, 1);
+  saveLogs();
+  renderLogList();
+  updateStats();
+  showToast('BEARBEITEN — ERNEUT SPEICHERN');
+  // Scroll to top of log page
+  document.getElementById('page-log').scrollTo(0, 0);
+}
+
 function renderLogList() {
   const container = document.getElementById('logList');
   container.innerHTML = '';
   if(!logs.length) {
-    container.innerHTML = '<div style="padding:20px; text-align:center; font-family:var(--mono); font-size:10px; color:var(--muted);">NOCH KEINE EINHEITEN GELOGGT</div>';
+    container.innerHTML = '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted);">NOCH KEINE EINHEITEN GELOGGT</div>';
+    updateStats();
     return;
   }
-  logs.slice(0,20).forEach(l => {
+  logs.slice(0,20).forEach((l, idx) => {
     const d = DISC[l.disc] || DISC.rest;
     const div = document.createElement('div');
-    div.className = 'log-entry';
+    div.style.cssText = 'margin:0 12px 6px;border:1px solid var(--border);background:var(--panel);overflow:hidden;';
     div.innerHTML = `
-      <span class="le-icon">${d.icon}</span>
-      <div class="le-info">
-        <div class="le-type">${d.label}</div>
-        <div class="le-detail">${l.km?l.km+' km':''}${l.km&&l.min?' · ':''}${l.min?l.min+' min':''}${l.note?' · '+l.note:''}</div>
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 14px;">
+        <span style="font-size:18px;">${d.icon}</span>
+        <div>
+          <div style="font-family:var(--sans);font-size:12px;font-weight:600;">${d.label}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px;">
+            ${l.km?l.km+' km':''}${l.km&&l.min?' · ':''}${l.min?l.min+' min':''}${l.note?' · '+l.note:''}
+          </div>
+        </div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">${l.date}</span>
       </div>
-      <span class="le-date">${l.date}</span>`;
+      <div style="display:flex;border-top:1px solid var(--border);">
+        <button onclick="editLog(${idx})" style="flex:1;padding:8px;background:none;border:none;border-right:1px solid var(--border);color:var(--yellow);font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;">✏ BEARBEITEN</button>
+        <button onclick="deleteLog(${idx})" style="flex:1;padding:8px;background:none;border:none;color:var(--red);font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;">✕ LÖSCHEN</button>
+      </div>`;
     container.appendChild(div);
   });
   updateStats();
