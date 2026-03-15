@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IRON 70.3">
+<meta name="theme-color" content="#0a0a0a">
+<title>IRONMAN 70.3 — Kili</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --panel: #131313;
+  --panel2: #1a1a1a;
+  --border: #252525;
+  --red: #e8261a;
+  --orange: #e87a1a;
+  --yellow: #d4b84a;
+  --green: #2dd87a;
+  --blue: #3a9de8;
+  --swim: #3a9de8;
+  --bike: #e87a1a;
+  --run: #e8261a;
+  --strength: #9b6fd4;
+  --rest: #333;
+  --text: #e8e0d4;
+  --muted: #505050;
+  --muted2: #383838;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans); }
+
+/* === NAV === */
+.nav {
+  position: fixed; bottom:0; left:0; right:0;
+  height: calc(60px + var(--safe-bottom));
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: var(--safe-bottom);
+}
+.nav-btn {
+  flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; cursor:pointer; transition: all 0.15s; border:none; background:none; color:var(--muted);
+}
+.nav-btn.active { color: var(--red); }
+.nav-icon { font-size:20px; line-height:1; }
+.nav-label { font-family:var(--mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; }
+
+/* === PAGES === */
+.page { position:fixed; inset:0; bottom:60px; overflow-y:auto; overflow-x:hidden; display:none; }
+.page.active { display:block; }
+
+/* === SHARED === */
+.section-label {
+  font-family:var(--mono); font-size:9px; letter-spacing:3px;
+  color:var(--muted); text-transform:uppercase; padding:20px 16px 8px;
+}
+.card {
+  margin:0 12px 10px; background:var(--panel); border:1px solid var(--border);
+  border-radius:2px; overflow:hidden;
+}
+.divider { height:1px; background:var(--border); margin:0 16px; }
+
+/* ===========================
+   PAGE 1: TODAY
+=========================== */
+.today-header {
+  background: linear-gradient(135deg, rgba(232,38,26,0.12) 0%, transparent 70%);
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.today-header::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, var(--red), transparent 50%);
+}
+.today-date {
+  font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:2px; margin-bottom:4px;
+}
+.today-title {
+  font-family:var(--display); font-size:36px; letter-spacing:3px; line-height:1;
+  color:var(--text); margin-bottom:4px;
+}
+.today-subtitle { font-family:var(--sans); font-size:13px; color:var(--muted); }
+
+/* Countdown bar */
+.cd-bar {
+  display:flex; gap:0; margin:0; border-bottom:1px solid var(--border);
+}
+.cd-item {
+  flex:1; text-align:center; padding:12px 4px;
+  border-right:1px solid var(--border);
+}
+.cd-item:last-child { border-right:none; }
+.cd-num { font-family:var(--display); font-size:28px; color:var(--red); line-height:1; }
+.cd-unit { font-family:var(--mono); font-size:7px; color:var(--muted); letter-spacing:2px; margin-top:2px; }
+
+/* Workout card */
+.workout-card {
+  margin: 12px; border:1px solid var(--border); background:var(--panel); position:relative; overflow:hidden;
+}
+.wc-stripe {
+  height:3px; width:100%;
+}
+.wc-header {
+  padding:14px 16px 10px; display:flex; align-items:center; gap:12px;
+}
+.wc-icon { font-size:28px; }
+.wc-meta { flex:1; }
+.wc-type { font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; margin-bottom:3px; }
+.wc-name { font-family:var(--display); font-size:26px; letter-spacing:2px; line-height:1; }
+.wc-duration {
+  font-family:var(--mono); font-size:11px; color:var(--muted);
+  background:var(--panel2); border:1px solid var(--border);
+  padding:4px 8px; white-space:nowrap;
+}
+.wc-body { padding:0 16px 16px; }
+.wc-desc { font-family:var(--sans); font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:14px; }
+
+/* Intervals */
+.intervals { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.interval-row {
+  display:grid; grid-template-columns:32px 1fr 70px;
+  align-items:center; gap:10px;
+  padding:8px 10px; border:1px solid var(--border); background:var(--panel2);
+}
+.ir-num { font-family:var(--mono); font-size:10px; color:var(--muted); }
+.ir-desc { font-family:var(--sans); font-size:12px; color:var(--text); }
+.ir-load { font-family:var(--mono); font-size:10px; color:var(--yellow); text-align:right; }
+.ir-zone {
+  display:inline-block; font-family:var(--mono); font-size:8px; letter-spacing:1px;
+  padding:2px 5px; border:1px solid; margin-top:2px;
+}
+.z1 { color:#3a9de8; border-color:#3a9de8; }
+.z2 { color:#2dd87a; border-color:#2dd87a; }
+.z3 { color:#d4b84a; border-color:#d4b84a; }
+.z4 { color:#e87a1a; border-color:#e87a1a; }
+.z5 { color:#e8261a; border-color:#e8261a; }
+
+/* Done button */
+.done-btn {
+  width:100%; padding:14px; border:none; cursor:pointer;
+  font-family:var(--mono); font-size:11px; letter-spacing:3px; text-transform:uppercase;
+  transition: all 0.2s; position:relative; overflow:hidden;
+}
+.done-btn.pending { background:var(--red); color:white; }
+.done-btn.completed { background:rgba(45,216,122,0.1); color:var(--green); border:1px solid var(--green); }
+
+/* Rest day */
+.rest-day { padding:28px 16px; text-align:center; }
+.rest-icon { font-size:40px; margin-bottom:12px; }
+.rest-title { font-family:var(--display); font-size:28px; letter-spacing:3px; margin-bottom:8px; }
+.rest-text { font-family:var(--sans); font-size:13px; color:var(--muted); line-height:1.6; }
+
+/* Weekly overview strip */
+.week-strip {
+  display:grid; grid-template-columns:repeat(7,1fr); margin:0 12px 12px;
+  border:1px solid var(--border);
+}
+.ws-day {
+  padding:8px 4px; text-align:center; border-right:1px solid var(--border); cursor:pointer;
+}
+.ws-day:last-child { border-right:none; }
+.ws-day.today-marker { background:rgba(232,38,26,0.08); }
+.ws-day.done-marker { background:rgba(45,216,122,0.05); }
+.ws-day-name { font-family:var(--mono); font-size:7px; color:var(--muted); letter-spacing:1px; margin-bottom:5px; }
+.ws-dot { width:8px; height:8px; border-radius:50%; margin:0 auto; background:var(--muted2); }
+.ws-dot.swim { background:var(--swim); }
+.ws-dot.bike { background:var(--bike); }
+.ws-dot.run { background:var(--run); }
+.ws-dot.strength { background:var(--strength); }
+.ws-dot.rest { background:var(--muted2); }
+.ws-dot.done { box-shadow:0 0 6px currentColor; }
+
+/* ===========================
+   PAGE 2: PLAN (weeks)
+=========================== */
+.phase-banner {
+  margin:12px; padding:14px 16px; border:1px solid var(--border);
+  border-left:3px solid var(--red); background:rgba(232,38,26,0.04);
+}
+.pb-label { font-family:var(--mono); font-size:8px; color:var(--red); letter-spacing:2px; margin-bottom:4px; }
+.pb-title { font-family:var(--display); font-size:24px; letter-spacing:2px; }
+.pb-desc { font-family:var(--sans); font-size:12px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+.week-card {
+  margin:0 12px 8px; border:1px solid var(--border); background:var(--panel); overflow:hidden;
+}
+.wk-header {
+  padding:10px 14px; display:flex; justify-content:space-between; align-items:center;
+  background:var(--panel2); cursor:pointer; user-select:none;
+}
+.wk-num { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:2px; }
+.wk-title { font-family:var(--sans); font-size:13px; font-weight:600; }
+.wk-vol { font-family:var(--mono); font-size:9px; color:var(--yellow); }
+.wk-chevron { font-size:10px; color:var(--muted); transition:transform 0.2s; }
+.wk-chevron.open { transform:rotate(180deg); }
+.wk-body { display:none; overflow:hidden; }
+.wk-body.open { display:block; }
+
+.day-row {
+  display:grid; grid-template-columns:36px 24px 1fr 60px;
+  align-items:center; gap:8px; padding:9px 14px;
+  border-top:1px solid var(--border);
+}
+.dr-day { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:1px; }
+.dr-icon { font-size:15px; }
+.dr-name { font-family:var(--sans); font-size:12px; }
+.dr-dur { font-family:var(--mono); font-size:9px; color:var(--muted); text-align:right; }
+
+/* ===========================
+   PAGE 3: LOG
+=========================== */
+.log-form {
+  margin:12px; padding:16px; border:1px solid var(--border); background:var(--panel);
+}
+.lf-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+.lf-full { margin-bottom:8px; }
+.lf-select, .lf-input {
+  width:100%; background:var(--panel2); border:1px solid var(--border);
+  color:var(--text); font-family:var(--mono); font-size:11px;
+  padding:10px 12px; outline:none; border-radius:0; -webkit-appearance:none;
+}
+.lf-select:focus, .lf-input:focus { border-color:var(--red); }
+.lf-select option { background:#111; }
+.lf-btn {
+  width:100%; padding:13px; background:var(--red); color:white; border:none;
+  font-family:var(--mono); font-size:11px; letter-spacing:3px; cursor:pointer;
+}
+
+.log-entry {
+  margin:0 12px 6px; padding:10px 14px;
+  border:1px solid var(--border); background:var(--panel);
+  display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+}
+.le-icon { font-size:18px; }
+.le-info { }
+.le-type { font-family:var(--sans); font-size:12px; font-weight:600; }
+.le-detail { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:2px; }
+.le-date { font-family:var(--mono); font-size:9px; color:var(--muted); white-space:nowrap; }
+
+/* Stats row */
+.stats-row {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  margin:0 12px 12px; border:1px solid var(--border);
+}
+.stat-item { padding:12px 8px; text-align:center; border-right:1px solid var(--border); }
+.stat-item:last-child { border-right:none; }
+.stat-val { font-family:var(--display); font-size:24px; line-height:1; }
+.stat-lbl { font-family:var(--mono); font-size:7px; color:var(--muted); letter-spacing:1px; margin-top:3px; }
+
+/* ===========================
+   PAGE 4: PROGRESS
+=========================== */
+.progress-hero {
+  margin:12px; padding:20px; border:1px solid var(--border);
+  background: linear-gradient(135deg, rgba(232,38,26,0.08), transparent);
+  text-align:center; position:relative; overflow:hidden;
+}
+.ph-pct { font-family:var(--display); font-size:72px; color:var(--red); line-height:1; }
+.ph-label { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:3px; margin-bottom:16px; }
+.ph-bar-track { height:3px; background:var(--border); position:relative; margin:0 0 8px; }
+.ph-bar-fill { height:100%; background:var(--red); position:relative; transition:width 1s; }
+.ph-bar-fill::after {
+  content:''; position:absolute; right:-4px; top:-4px;
+  width:11px; height:11px; border-radius:50%; background:var(--red);
+  box-shadow:0 0 12px var(--red);
+}
+
+.discipline-block {
+  margin:0 12px 8px; border:1px solid var(--border); background:var(--panel); overflow:hidden;
+}
+.db-header {
+  padding:12px 14px; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--border);
+}
+.db-icon { font-size:20px; }
+.db-title { font-family:var(--sans); font-size:13px; font-weight:700; flex:1; }
+.db-total { font-family:var(--mono); font-size:11px; color:var(--yellow); }
+.db-body { padding:12px 14px; }
+.db-bar-track { height:2px; background:var(--border); margin-bottom:8px; }
+.db-bar-fill { height:100%; transition:width 1s; }
+.db-stats {
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;
+}
+.db-stat-val { font-family:var(--mono); font-size:13px; font-weight:600; }
+.db-stat-lbl { font-family:var(--mono); font-size:8px; color:var(--muted); margin-top:2px; }
+
+/* Milestones */
+.ms-item {
+  margin:0 12px 6px; padding:12px 14px;
+  border:1px solid var(--border); background:var(--panel);
+  display:flex; align-items:center; gap:12px;
+}
+.ms-icon { font-size:22px; }
+.ms-info { flex:1; }
+.ms-title { font-family:var(--sans); font-size:12px; font-weight:600; }
+.ms-sub { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:2px; }
+.ms-badge {
+  font-family:var(--mono); font-size:8px; letter-spacing:1px;
+  padding:3px 7px; border:1px solid; white-space:nowrap;
+}
+.ms-badge.done { color:var(--green); border-color:var(--green); }
+.ms-badge.next { color:var(--red); border-color:var(--red); }
+.ms-badge.later { color:var(--muted); border-color:var(--muted); }
+
+/* Install banner */
+.install-banner {
+  margin:12px; padding:14px 16px;
+  border:1px solid var(--yellow); background:rgba(212,184,74,0.06);
+  display:flex; gap:12px; align-items:flex-start;
+}
+.ib-icon { font-size:20px; flex-shrink:0; }
+.ib-text { font-family:var(--sans); font-size:12px; line-height:1.6; color:var(--text); }
+.ib-text strong { color:var(--yellow); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.animate { animation: fadeUp 0.3s ease forwards; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+  background:var(--green); color:#000; font-family:var(--mono); font-size:11px;
+  letter-spacing:2px; padding:10px 20px; z-index:200;
+  opacity:0; transition:opacity 0.3s; pointer-events:none;
+}
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- PAGES -->
+
+<!-- PAGE: TODAY -->
+<div class="page active" id="page-today">
+  <div class="today-header">
+    <div class="today-date" id="todayDateStr">SONNTAG · 15. MÄRZ 2026</div>
+    <div class="today-title">HEUTE</div>
+    <div class="today-subtitle" id="todayPhaseLabel">Phase 1 · Fundament</div>
+  </div>
+
+  <!-- Countdown -->
+  <div class="cd-bar">
+    <div class="cd-item"><div class="cd-num" id="cdDays">—</div><div class="cd-unit">TAGE</div></div>
+    <div class="cd-item"><div class="cd-num" id="cdWeeks">—</div><div class="cd-unit">WOCHEN</div></div>
+    <div class="cd-item"><div class="cd-num" id="cdMonths">—</div><div class="cd-unit">MONATE</div></div>
+    <div class="cd-item"><div class="cd-num" style="color:var(--green)" id="cdDone">—</div><div class="cd-unit">EINHEITEN</div></div>
+  </div>
+
+  <!-- Weekly strip -->
+  <div class="section-label">DIESE WOCHE</div>
+  <div class="week-strip" id="weekStrip"></div>
+
+  <!-- Today's workout -->
+  <div class="section-label">HEUTIGE EINHEIT</div>
+  <div id="todayWorkoutContainer"></div>
+</div>
+
+<!-- PAGE: PLAN -->
+<div class="page" id="page-plan">
+  <div class="section-label">TRAININGSPLAN · 15 MONATE</div>
+  <div class="phase-banner">
+    <div class="pb-label" id="planPhaseBadge">PHASE 1 · AKTIV</div>
+    <div class="pb-title" id="planPhaseTitle">FUNDAMENT & KRAUL-BASIS</div>
+    <div class="pb-desc" id="planPhaseDesc">Aerobe Grundlage, Kraulschwimmen lernen, Laufen ohne Pause</div>
+  </div>
+
+  <!-- Phase selector tabs -->
+  <div style="display:flex; gap:0; margin:0 12px 12px; border:1px solid var(--border); overflow:hidden;">
+    <button onclick="showPhase(0)" id="ptab0" class="phase-tab" style="flex:1; padding:9px 4px; background:var(--red); color:white; border:none; font-family:var(--mono); font-size:8px; letter-spacing:1px; cursor:pointer; border-right:1px solid var(--border);">PH.1</button>
+    <button onclick="showPhase(1)" id="ptab1" class="phase-tab" style="flex:1; padding:9px 4px; background:var(--panel2); color:var(--muted); border:none; font-family:var(--mono); font-size:8px; letter-spacing:1px; cursor:pointer; border-right:1px solid var(--border);">PH.2</button>
+    <button onclick="showPhase(2)" id="ptab2" class="phase-tab" style="flex:1; padding:9px 4px; background:var(--panel2); color:var(--muted); border:none; font-family:var(--mono); font-size:8px; letter-spacing:1px; cursor:pointer; border-right:1px solid var(--border);">PH.3</button>
+    <button onclick="showPhase(3)" id="ptab3" class="phase-tab" style="flex:1; padding:9px 4px; background:var(--panel2); color:var(--muted); border:none; font-family:var(--mono); font-size:8px; letter-spacing:1px; cursor:pointer;">PH.4</button>
+  </div>
+
+  <div id="planWeeksContainer"></div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- PAGE: LOG -->
+<div class="page" id="page-log">
+  <div class="section-label">EINHEIT LOGGEN</div>
+  <div class="log-form">
+    <div class="lf-full">
+      <select class="lf-select" id="logDisc">
+        <option value="">Disziplin wählen</option>
+        <option value="swim">🏊 Schwimmen</option>
+        <option value="bike">🚴 Radfahren</option>
+        <option value="run">🏃 Laufen</option>
+        <option value="strength">💪 Kraft / Athletik</option>
+        <option value="mobility">🧘 Mobility</option>
+      </select>
+    </div>
+    <div class="lf-row">
+      <input class="lf-input" id="logKm" type="number" step="0.1" min="0" placeholder="Distanz (km)">
+      <input class="lf-input" id="logMin" type="number" min="0" placeholder="Dauer (Min)">
+    </div>
+    <div class="lf-full">
+      <input class="lf-input" id="logNote" type="text" placeholder="Notiz (optional)">
+    </div>
+    <button class="lf-btn" onclick="addLog()">+ EINHEIT SPEICHERN</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="section-label">GESAMT-STATS</div>
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--swim)" id="statSwimKm">0</div>
+      <div class="stat-lbl">KM SWIM</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--bike)" id="statBikeKm">0</div>
+      <div class="stat-lbl">KM RAD</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--run)" id="statRunKm">0</div>
+      <div class="stat-lbl">KM LAUF</div>
+    </div>
+  </div>
+
+  <div class="section-label">LETZTE EINHEITEN</div>
+  <div id="logList"></div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- PAGE: PROGRESS -->
+<div class="page" id="page-progress">
+  <div class="section-label">IRONMAN 70.3 · READINESS</div>
+  <div class="progress-hero">
+    <div class="ph-label">GESAMTFORTSCHRITT</div>
+    <div class="ph-pct" id="progressPct">0%</div>
+    <div class="ph-bar-track"><div class="ph-bar-fill" id="progressBar" style="width:0%"></div></div>
+    <div style="font-family:var(--mono); font-size:9px; color:var(--muted);" id="progressSub">Start: 15.03.2026 · Ziel: 01.07.2027</div>
+  </div>
+
+  <!-- Install instructions -->
+  <div class="install-banner">
+    <span class="ib-icon">📲</span>
+    <div class="ib-text">
+      <strong>App installieren:</strong> Safari → Teilen-Symbol (□↑) → <strong>"Zum Home-Bildschirm"</strong> → Fertig. Danach verhält sich die App wie eine native App mit Icon auf deinem Homescreen.
+    </div>
+  </div>
+
+  <div class="section-label">DISZIPLINEN</div>
+  <div id="discBlocks"></div>
+
+  <div class="section-label">MEILENSTEINE</div>
+  <div id="milestoneList"></div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('today',this)">
+    <span class="nav-icon">⚡</span><span class="nav-label">HEUTE</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('plan',this)">
+    <span class="nav-icon">📋</span><span class="nav-label">PLAN</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('log',this)">
+    <span class="nav-icon">➕</span><span class="nav-label">LOG</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('progress',this)">
+    <span class="nav-icon">📈</span><span class="nav-label">STATS</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- Detail Modal -->
+<div id="detailModal" style="display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;">
+  <div id="detailModalContent" style="display:flex;flex-direction:column;height:100%;"></div>
+</div>
+
+<script>
+// =============================================
+// DATA
+// =============================================
+
+const START_DATE = new Date('2026-03-15');
+const RACE_DATE  = new Date('2027-07-01');
+
+// Disc icons & colors
+const DISC = {
+  swim:     { icon:'🏊', label:'Schwimmen', color:'var(--swim)' },
+  bike:     { icon:'🚴', label:'Radfahren',  color:'var(--bike)' },
+  run:      { icon:'🏃', label:'Laufen',     color:'var(--run)'  },
+  strength: { icon:'💪', label:'Kraft',      color:'var(--strength)' },
+  mobility: { icon:'🧘', label:'Mobility',   color:'var(--muted)' },
+  rest:     { icon:'😴', label:'Ruhe',       color:'var(--rest)' },
+};
+
+// =============================================
+// PHASES (4 phases → 15 months)
+// =============================================
+const PHASES = [
+  {
+    id:1, label:'PHASE 1', title:'FUNDAMENT & KRAUL-BASIS',
+    months:'Mär–Jun 2026', duration:'4 Monate', color:'var(--red)',
+    desc:'Kraulschwimmen lernen, Laufen ohne Pause, aerobe Basis. 3–4h/Woche.',
+    weeks: [
+      { num:1,  title:'Orientierung',          vol:'3h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmtechnik — Kraul-Einstieg', dur:'30 Min',
+            desc:'Erste Stunde mit Fokus auf Kraul-Armzug. Bitte Schwimmverein oder VHS buchen.',
+            intervals:[
+              {n:1, desc:'Warm-up Brust', load:'200m', zone:'z1'},
+              {n:2, desc:'Kraul-Armzug mit Brett (Pullbuoy)', load:'4×25m', zone:'z2'},
+              {n:3, desc:'Kraul komplett versuchen', load:'4×25m', zone:'z2'},
+              {n:4, desc:'Cool-down Brust', load:'100m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen — Walk-Run Einstieg', dur:'30 Min',
+            desc:'Sehr langsam. Puls max 140. Gehpausen sind erlaubt und Teil des Plans.',
+            intervals:[
+              {n:1, desc:'Einlaufen gehen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'2 Min laufen / 1 Min gehen — Wdh. ×6', load:'18 Min', zone:'z2'},
+              {n:3, desc:'Auslaufen gehen', load:'7 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Radfahren — Grundlage', dur:'45 Min',
+            desc:'Entspannte Runde. Ziel: 20–25 km. Hauptsache Spaß.',
+            intervals:[
+              {n:1, desc:'Einrollen locker', load:'15 Min', zone:'z1'},
+              {n:2, desc:'Gleichmäßig treten, Kadenz ~85', load:'25 Min', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+            ]},
+        ]},
+      { num:2, title:'Aufbauwoche', vol:'3.5h',
+        days:[
+          { d:'MO', disc:'swim', name:'Kraul — Beinschlag & Atmung', dur:'35 Min',
+            desc:'Heute Fokus: Atmung zur Seite (nicht nach oben). Beinschlag-Brett.',
+            intervals:[
+              {n:1, desc:'WarmUp Brust', load:'200m', zone:'z1'},
+              {n:2, desc:'Beinschlag mit Brett', load:'4×50m', zone:'z2'},
+              {n:3, desc:'Atmung alle 3 Züge üben', load:'6×25m', zone:'z2'},
+              {n:4, desc:'Kraul komplett', load:'2×50m', zone:'z2'},
+              {n:5, desc:'CoolDown', load:'100m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen — 3:2 Intervalle', dur:'35 Min',
+            desc:'Intervalle verlängern. Wenn Puls über 150 → gehen.',
+            intervals:[
+              {n:1, desc:'Gehen warm', load:'5 Min', zone:'z1'},
+              {n:2, desc:'3 Min laufen / 1.5 Min gehen — ×5', load:'22 Min', zone:'z2'},
+              {n:3, desc:'Gehen cool', load:'8 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Radfahren — etwas länger', dur:'55 Min',
+            desc:'25–30 km. Hügel ist okay, aber Puls im Griff behalten.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'10 Min', zone:'z1'},
+              {n:2, desc:'Z2 gleichmäßig', load:'35 Min', zone:'z2'},
+              {n:3, desc:'1 kurzer Hügelsprint', load:'3 Min', zone:'z4'},
+              {n:4, desc:'Ausrollen', load:'7 Min', zone:'z1'},
+            ]},
+        ]},
+      { num:3, title:'Ausbau', vol:'3.5h',
+        days:[
+          { d:'MO', disc:'swim', name:'Kraul — erste 100m am Stück', dur:'35 Min',
+            desc:'Ziel: 100m Kraul ohne anzuhalten. Tempo egal.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'200m Brust', zone:'z1'},
+              {n:2, desc:'Kraul 100m Versuch', load:'3 Versuche', zone:'z2'},
+              {n:3, desc:'Technik: Rollbewegung Rumpf', load:'4×25m', zone:'z2'},
+              {n:4, desc:'CoolDown', load:'100m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen — 4:2 Intervalle', dur:'35 Min',
+            desc:'4 Min laufen, 2 Min gehen. Puls Zone 2 halten.',
+            intervals:[
+              {n:1, desc:'WarmUp gehen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'4 Min laufen / 2 Min gehen — ×4', load:'24 Min', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'6 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Rad + kurzer Lauf (Brick)', dur:'60 Min',
+            desc:'Erster Brick! Direkt nach dem Rad 10 Min laufen — Beine fühlen sich komisch an, das ist normal.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'Z2 Dauerfahrt', load:'35 Min', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+              {n:4, desc:'DIREKT: Jog locker', load:'10 Min', zone:'z2'},
+            ]},
+        ]},
+      { num:4, title:'Regeneration', vol:'2h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen locker', dur:'25 Min',
+            desc:'Leichte Technikeinheit. Kein Stress.',
+            intervals:[
+              {n:1, desc:'Kraul locker', load:'400m', zone:'z1'},
+              {n:2, desc:'Technikübungen frei wählen', load:'200m', zone:'z2'},
+            ]},
+          { d:'DO', disc:'run', name:'Laufen — Recovery', dur:'25 Min',
+            desc:'Sehr langsam. Regeneration. Puls max 130.',
+            intervals:[
+              {n:1, desc:'Lockerer Dauerlauf', load:'25 Min', zone:'z1'},
+            ]},
+        ]},
+      { num:5, title:'Aufbau II', vol:'4h',
+        days:[
+          { d:'MO', disc:'swim', name:'Kraul — 200m am Stück', dur:'40 Min',
+            desc:'Heute ersten 200m Kraul am Stück schaffen.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'200m', zone:'z1'},
+              {n:2, desc:'200m Kraul ohne Stop — 2 Versuche', load:'400m', zone:'z2'},
+              {n:3, desc:'Technik: Zuglänge', load:'4×50m', zone:'z2'},
+              {n:4, desc:'CoolDown', load:'100m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen — 20 Min durch', dur:'35 Min',
+            desc:'Ziel: 20 Min laufen ohne Pause. Tempo egal, Puls egal — einfach durchlaufen.',
+            intervals:[
+              {n:1, desc:'WarmUp gehen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'20 Min Dauerlauf — KEIN STOPP', load:'20 Min', zone:'z2'},
+              {n:3, desc:'CoolDown gehen', load:'10 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Lange Radeinheit', dur:'75 Min',
+            desc:'30–35 km. Erste wirklich lange Ausfahrt.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'10 Min', zone:'z1'},
+              {n:2, desc:'Z2 konstant', load:'55 Min', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'10 Min', zone:'z1'},
+            ]},
+        ]},
+      { num:6, title:'Erste Wettkampf-Simulation', vol:'4h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen — Strecke aufbauen', dur:'40 Min',
+            desc:'3×200m Kraul. Zwischen Sätzen 90 Sek Pause.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'300m', zone:'z1'},
+              {n:2, desc:'3×200m Kraul, 90s Pause', load:'600m', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen — 30 Min durch', dur:'40 Min',
+            desc:'30 Min ohne Pause. Das ist Phase-1-Ziel!',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'5 Min gehen', zone:'z1'},
+              {n:2, desc:'30 Min Dauerlauf', load:'30 Min', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'5 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Brick — Rad + Lauf', dur:'75 Min',
+            desc:'40 km Rad, dann direkt 15 Min Laufen. Das ist echter Triathlon-Feeling.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'Z2 Dauerfahrt', load:'50 Min', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+              {n:4, desc:'BRICK-Lauf direkt', load:'15 Min', zone:'z2'},
+            ]},
+        ]},
+    ]
+  },
+  {
+    id:2, label:'PHASE 2', title:'SPRINT-TRIATHLON & AUFBAU',
+    months:'Jul–Sep 2026', duration:'3 Monate', color:'var(--orange)',
+    desc:'Sprint-Triathlon als erstes Rennen. Wettkampferfahrung sammeln. Umfang auf 5h steigern.',
+    weeks: [
+      { num:7,  title:'Sprint-Vorbereitung I',   vol:'4.5h',
+        days:[
+          { d:'MO', disc:'swim', name:'Kraul — 600m am Stück', dur:'40 Min',
+            desc:'600m ohne Stopp. Pace egal. Fokus: Technik halten bei Ermüdung.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'200m', zone:'z1'},
+              {n:2, desc:'600m Kraul kontinuierlich', load:'600m', zone:'z2'},
+              {n:3, desc:'Technik-Drill: Catch-up', load:'4×50m', zone:'z2'},
+              {n:4, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Tempolauf 5km', dur:'35 Min',
+            desc:'5km am Stück. Kein Walk mehr. Ziel-Pace: 6:30 min/km.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'5 Min', zone:'z1'},
+              {n:2, desc:'5 km Dauerlauf @ 6:30er Pace', load:'5 km', zone:'z3'},
+              {n:3, desc:'CoolDown', load:'5 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Rad + Brick-Lauf', dur:'80 Min',
+            desc:'45 km Rad, 20 Min Laufen direkt danach.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'Z2/Z3 Mix', load:'55 Min', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+              {n:4, desc:'BRICK-Lauf', load:'20 Min', zone:'z2'},
+            ]},
+        ]},
+      { num:8, title:'Sprint-Vorbereitung II', vol:'4.5h',
+        days:[
+          { d:'MO', disc:'swim', name:'Sprint-Distanz — 750m', dur:'40 Min',
+            desc:'750m Kraul simulieren. Das ist die Sprint-Schwimmstrecke.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'200m', zone:'z1'},
+              {n:2, desc:'750m Kraul am Stück', load:'750m', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'5km Tempo', dur:'35 Min',
+            desc:'Progressiv: erste 2 km locker, letzte 2 km schneller.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'5 Min', zone:'z1'},
+              {n:2, desc:'2 km @ 7:00 locker', load:'2 km', zone:'z2'},
+              {n:3, desc:'2 km @ 6:00 Tempo', load:'2 km', zone:'z3'},
+              {n:4, desc:'CoolDown', load:'8 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Sprint-Sim: 20km + Lauf', dur:'65 Min',
+            desc:'Kurze scharfe Radeinheit wie Sprint-Rennen. Danach 5km laufen.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'5 Min', zone:'z1'},
+              {n:2, desc:'20km @ Z3 Race-Pace', load:'20 km', zone:'z3'},
+              {n:3, desc:'BRICK-Lauf 5 km', load:'5 km', zone:'z2'},
+            ]},
+        ]},
+      { num:9, title:'WETTKAMPF-WOCHE', vol:'2h (Taper)',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen locker', dur:'20 Min',
+            desc:'400m locker. Keine Anstrengung. Beine schonen.',
+            intervals:[
+              {n:1, desc:'400m locker Kraul', load:'400m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Kurzer Aktivierungslauf', dur:'20 Min',
+            desc:'2-3 kurze 30s Steigerungen am Ende. Körper aktivieren.',
+            intervals:[
+              {n:1, desc:'15 Min locker', load:'15 Min', zone:'z1'},
+              {n:2, desc:'3×30s Steigerung', load:'90s', zone:'z4'},
+              {n:3, desc:'Auslocker', load:'5 Min', zone:'z1'},
+            ]},
+          { d:'SO', disc:'swim', name:'🏆 SPRINT-TRIATHLON RACE DAY', dur:'RENNEN',
+            desc:'750m Schwimmen · 20km Rad · 5km Laufen. Einfach finishen. Kein Zeitdruck.',
+            intervals:[
+              {n:1, desc:'Schwimmen 750m', load:'~15 Min', zone:'z3'},
+              {n:2, desc:'Wechsel 1', load:'2 Min', zone:''},
+              {n:3, desc:'Radfahren 20km', load:'~45 Min', zone:'z3'},
+              {n:4, desc:'Wechsel 2', load:'1 Min', zone:''},
+              {n:5, desc:'Laufen 5km', load:'~32 Min', zone:'z3'},
+            ]},
+        ]},
+    ]
+  },
+  {
+    id:3, label:'PHASE 3', title:'OLYMPISCHE DISTANZ & AUSDAUER',
+    months:'Okt 2026 – Feb 2027', duration:'5 Monate', color:'var(--yellow)',
+    desc:'Olympische Distanz als Test. Wöchentliche Stunden auf 6–7h. Lange Einheiten.',
+    weeks: [
+      { num:10, title:'Basis nach Rennen', vol:'4h',
+        days:[
+          { d:'DI', disc:'swim', name:'Schwimmen — Back to base', dur:'40 Min',
+            desc:'1000m Kraul. Technik nochmal fokussieren.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'300m', zone:'z1'},
+              {n:2, desc:'1000m Kraul kontinuierlich', load:'1000m', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'DO', disc:'run', name:'Laufen 8km', dur:'55 Min',
+            desc:'8km @ 6:30-7:00 min/km. Alles in Z2.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'5 Min', zone:'z1'},
+              {n:2, desc:'8 km Z2', load:'8 km', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'5 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Lange Ausfahrt', dur:'90 Min',
+            desc:'60km, Z2. Erster wirklich langer Ride.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'10 Min', zone:'z1'},
+              {n:2, desc:'60 km Z2', load:'60 km', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'10 Min', zone:'z1'},
+            ]},
+        ]},
+      { num:11, title:'Olympische Distanz Aufbau', vol:'5.5h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen 1500m', dur:'45 Min',
+            desc:'1500m Kraul — Olympische Distanz.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'300m', zone:'z1'},
+              {n:2, desc:'1500m Kraul', load:'1500m', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Tempoeinheit 10km', dur:'65 Min',
+            desc:'10km — das erste Mal. Pace 6:30 oder langsamer.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'8 Min', zone:'z1'},
+              {n:2, desc:'10 km Z2', load:'10 km', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'7 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Brick 80km + 20Min Lauf', dur:'3h30',
+            desc:'80km Rad, dann 20 Min laufen. Das ist schon halbe 70.3-Energie.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'10 Min', zone:'z1'},
+              {n:2, desc:'80 km Z2', load:'80 km', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+              {n:4, desc:'BRICK-Lauf', load:'20 Min', zone:'z2'},
+            ]},
+        ]},
+    ]
+  },
+  {
+    id:4, label:'PHASE 4', title:'70.3 PEAK & TAPER',
+    months:'Mär–Jun 2027', duration:'3 Monate', color:'var(--green)',
+    desc:'Maximale Vorbereitung auf 70.3. Längste Einheiten. Dann 3-Wochen-Taper.',
+    weeks: [
+      { num:12, title:'Peak-Woche Schwimmen', vol:'6h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen 1900m — Race Distance', dur:'50 Min',
+            desc:'1900m Kraul. Das ist die 70.3-Schwimmstrecke. Kein Stop.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'300m', zone:'z1'},
+              {n:2, desc:'1900m Kraul — Wettkampf-Pace', load:'1900m', zone:'z3'},
+              {n:3, desc:'CoolDown', load:'200m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Halbmarathon-Lauf', dur:'2h',
+            desc:'21 km @ 6:30–7:00 min/km. Erster Halbmarathon.',
+            intervals:[
+              {n:1, desc:'WarmUp', load:'8 Min', zone:'z1'},
+              {n:2, desc:'21 km Z2 gleichmäßig', load:'21 km', zone:'z2'},
+              {n:3, desc:'CoolDown', load:'7 Min', zone:'z1'},
+            ]},
+          { d:'SA', disc:'bike', name:'Großer Brick — 90km + Lauf', dur:'4h',
+            desc:'90km Rad + 20 Min Laufen. Das ist die wichtigste Einheit des Plans.',
+            intervals:[
+              {n:1, desc:'Einrollen', load:'10 Min', zone:'z1'},
+              {n:2, desc:'90 km Z2/Z3', load:'90 km', zone:'z2'},
+              {n:3, desc:'Ausrollen', load:'5 Min', zone:'z1'},
+              {n:4, desc:'BRICK-Lauf 20 Min', load:'20 Min', zone:'z2'},
+            ]},
+        ]},
+      { num:13, title:'Taper-Start', vol:'4h',
+        days:[
+          { d:'MO', disc:'swim', name:'Schwimmen locker 1000m', dur:'30 Min',
+            desc:'Reduktion beginnt. Intensität raus, Technik halten.',
+            intervals:[
+              {n:1, desc:'1000m locker', load:'1000m', zone:'z1'},
+            ]},
+          { d:'MI', disc:'run', name:'Laufen 45 Min locker', dur:'45 Min',
+            desc:'Z1/Z2 nur. Kein Tempo. Körper erholen lassen.',
+            intervals:[
+              {n:1, desc:'45 Min locker Z2', load:'45 Min', zone:'z2'},
+            ]},
+          { d:'SA', disc:'bike', name:'Rad 60km locker', dur:'2h',
+            desc:'60km, Z2 maximal. Letzte lange Ausfahrt vor dem Rennen.',
+            intervals:[
+              {n:1, desc:'60 km locker', load:'60 km', zone:'z2'},
+            ]},
+        ]},
+      { num:14, title:'Race Week — Taper', vol:'2h',
+        days:[
+          { d:'DI', disc:'swim', name:'Aktivierung Schwimmen', dur:'20 Min',
+            desc:'400m locker, 4×50m mit leichtem Tempo. Körper wach halten.',
+            intervals:[
+              {n:1, desc:'400m locker', load:'400m', zone:'z1'},
+              {n:2, desc:'4×50m leicht', load:'200m', zone:'z3'},
+              {n:3, desc:'CoolDown', load:'100m', zone:'z1'},
+            ]},
+          { d:'DO', disc:'run', name:'Aktivierungslauf 20 Min', dur:'20 Min',
+            desc:'Locker mit 3-4 kurzen Steigerungen. Frisch halten.',
+            intervals:[
+              {n:1, desc:'15 Min locker', load:'15 Min', zone:'z1'},
+              {n:2, desc:'4×30s Steigerung', load:'2 Min', zone:'z4'},
+              {n:3, desc:'CoolDown', load:'3 Min', zone:'z1'},
+            ]},
+          { d:'SO', disc:'swim', name:'🏆 IRONMAN 70.3 — RACE DAY', dur:'RENNEN',
+            desc:'1,9km Schwimmen · 90km Rad · 21km Laufen. Du hast 15 Monate trainiert. Jetzt Finisher werden.',
+            intervals:[
+              {n:1, desc:'🏊 Schwimmen 1900m', load:'~38 Min', zone:'z3'},
+              {n:2, desc:'Wechsel 1', load:'3-4 Min', zone:''},
+              {n:3, desc:'🚴 Radfahren 90km', load:'~3h', zone:'z3'},
+              {n:4, desc:'Wechsel 2', load:'2-3 Min', zone:''},
+              {n:5, desc:'🏃 Laufen 21km', load:'~2.5h', zone:'z2'},
+            ]},
+        ]},
+    ]
+  },
+];
+
+// =============================================
+// STATE
+// =============================================
+let logs = JSON.parse(localStorage.getItem('im703_logs') || '[]');
+let done = JSON.parse(localStorage.getItem('im703_done') || '[]'); // array of "weekNum-dayD" keys
+let currentPhaseIdx = 0;
+
+// =============================================
+// UTILS
+// =============================================
+function today() { return new Date(); }
+function daysBetween(a, b) { return Math.round((b-a)/(1000*60*60*24)); }
+function fmt(d) {
+  return d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+function saveLogs() { localStorage.setItem('im703_logs', JSON.stringify(logs)); }
+function saveDone() { localStorage.setItem('im703_done', JSON.stringify(done)); }
+const DOW = ['SO','MO','DI','MI','DO','FR','SA'];
+
+// =============================================
+// NAV
+// =============================================
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='progress') renderProgress();
+  if(id==='log') renderLogList();
+  // Only render plan if container is empty (first visit)
+  if(id==='plan' && !document.getElementById('planWeeksContainer').children.length) {
+    showPhase(currentPhaseIdx);
+  }
+}
+
+// =============================================
+// TODAY PAGE
+// =============================================
+function getCurrentDayOfWeek() {
+  const now = today();
+  return DOW[now.getDay()]; // 'MO','DI', etc.
+}
+
+function findTodayWorkout() {
+  const dow = getCurrentDayOfWeek();
+  // Find in current training week (week 1 = first week)
+  const weeksSinceStart = Math.floor(daysBetween(START_DATE, today()) / 7);
+  
+  // Find which phase+week we're in
+  let weekCount = 0;
+  for(const phase of PHASES) {
+    for(const week of phase.weeks) {
+      if(weekCount === weeksSinceStart % getTotalWeeks()) {
+        const dayWorkout = week.days.find(d => d.d === dow);
+        return { workout: dayWorkout || null, week, phase, weekCount };
+      }
+      weekCount++;
+    }
+  }
+  return { workout: null, week: null, phase: PHASES[0] };
+}
+
+function getTotalWeeks() {
+  return PHASES.reduce((acc, p) => acc + p.weeks.length, 0);
+}
+
+function renderToday() {
+  document.getElementById('todayDateStr').textContent = fmt(today());
+  
+  // countdown
+  const daysLeft = daysBetween(today(), RACE_DATE);
+  document.getElementById('cdDays').textContent = daysLeft;
+  document.getElementById('cdWeeks').textContent = Math.floor(daysLeft/7);
+  document.getElementById('cdMonths').textContent = Math.floor(daysLeft/30);
+  document.getElementById('cdDone').textContent = done.length;
+
+  // Week strip
+  renderWeekStrip();
+
+  // Today workout
+  const { workout, week, phase } = findTodayWorkout();
+  document.getElementById('todayPhaseLabel').textContent = phase ? `${phase.label} · ${phase.title}` : '';
+
+  const container = document.getElementById('todayWorkoutContainer');
+  if(!workout) {
+    container.innerHTML = `
+      <div class="workout-card">
+        <div class="wc-stripe" style="background:var(--muted2)"></div>
+        <div class="rest-day">
+          <div class="rest-icon">😴</div>
+          <div class="rest-title">RUHETAG</div>
+          <div class="rest-text">Heute ist kein Training geplant.<br>Trinken, schlafen, Beine hochlegen.<br>Recovery ist Teil des Plans.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const disc = DISC[workout.disc] || DISC.rest;
+  const doneKey = `w${week.num}-${workout.d}`;
+  const isDone = done.includes(doneKey);
+
+  let intervalsHTML = '';
+  if(workout.intervals && workout.intervals.length) {
+    intervalsHTML = '<div class="intervals">';
+    workout.intervals.forEach(iv => {
+      intervalsHTML += `
+        <div class="interval-row">
+          <span class="ir-num">${String(iv.n).padStart(2,'0')}</span>
+          <span class="ir-desc">${iv.desc}${iv.zone ? `<br><span class="ir-zone ${iv.zone}">${iv.zone.toUpperCase()}</span>` : ''}</span>
+          <span class="ir-load">${iv.load}</span>
+        </div>`;
+    });
+    intervalsHTML += '</div>';
+  }
+
+  container.innerHTML = `
+    <div class="workout-card">
+      <div class="wc-stripe" style="background:${disc.color}"></div>
+      <div class="wc-header">
+        <span class="wc-icon">${disc.icon}</span>
+        <div class="wc-meta">
+          <div class="wc-type" style="color:${disc.color}">${disc.label}</div>
+          <div class="wc-name">${workout.name}</div>
+        </div>
+        <span class="wc-duration">${workout.dur}</span>
+      </div>
+      <div class="wc-body">
+        <div class="wc-desc">${workout.desc}</div>
+        ${intervalsHTML}
+        <button class="done-btn ${isDone?'completed':'pending'}" id="doneBtn" onclick="toggleDone('${doneKey}')">
+          ${isDone ? '✓ EINHEIT ABGESCHLOSSEN' : '✓ ALS ERLEDIGT MARKIEREN'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function toggleDone(key) {
+  if(done.includes(key)) {
+    done = done.filter(k=>k!==key);
+    showToast('ENTFERNT');
+  } else {
+    done.push(key);
+    showToast('✓ EINHEIT GESPEICHERT!');
+  }
+  saveDone();
+  renderToday();
+  renderWeekStrip();
+}
+
+function renderWeekStrip() {
+  const container = document.getElementById('weekStrip');
+  container.innerHTML = '';
+  const dow = getCurrentDayOfWeek();
+  const dowIdx = ['MO','DI','MI','DO','FR','SA','SO'];
+  const todayIdx = dowIdx.indexOf(dow);
+
+  // Get this week's workouts
+  const weeksSinceStart = Math.floor(daysBetween(START_DATE, today()) / 7);
+  let weekData = null;
+  let weekCount = 0;
+  for(const phase of PHASES) {
+    for(const week of phase.weeks) {
+      if(weekCount === weeksSinceStart % getTotalWeeks()) { weekData = week; break; }
+      weekCount++;
+    }
+    if(weekData) break;
+  }
+
+  dowIdx.forEach((d, i) => {
+    const workout = weekData ? weekData.days.find(w=>w.d===d) : null;
+    const isToday = i === todayIdx;
+    const doneKey = weekData ? `w${weekData.num}-${d}` : '';
+    const isDone = done.includes(doneKey);
+    
+    let dotClass = workout ? (workout.disc || 'rest') : 'rest';
+    
+    const div = document.createElement('div');
+    div.className = `ws-day${isToday?' today-marker':''}${isDone?' done-marker':''}`;
+    div.innerHTML = `
+      <div class="ws-day-name">${d}</div>
+      <div class="ws-dot ${dotClass} ${isDone?'done':''}"></div>`;
+    container.appendChild(div);
+  });
+}
+
+// =============================================
+// PLAN PAGE
+// =============================================
+function showPhase(idx) {
+  currentPhaseIdx = idx;
+  const phase = PHASES[idx];
+  document.getElementById('planPhaseBadge').textContent = `${phase.label} · ${phase.months}`;
+  document.getElementById('planPhaseTitle').textContent = phase.title;
+  document.getElementById('planPhaseDesc').textContent = phase.desc;
+
+  // Update tabs
+  document.querySelectorAll('.phase-tab').forEach((tab, i) => {
+    tab.style.background = i === idx ? 'var(--red)' : 'var(--panel2)';
+    tab.style.color = i === idx ? 'white' : 'var(--muted)';
+  });
+
+  // Only re-render weeks if phase changed
+  const container = document.getElementById('planWeeksContainer');
+  if(container.dataset.phase === String(idx)) return;
+  container.dataset.phase = String(idx);
+  container.innerHTML = '';
+
+  phase.weeks.forEach((week, wi) => {
+    const div = document.createElement('div');
+    div.className = 'week-card';
+
+    let daysHTML = '';
+    week.days.forEach(day => {
+      const d = DISC[day.disc] || DISC.rest;
+      daysHTML += `
+        <div class="day-row" onclick="showDayDetail(${idx},${wi},'${day.d}')">
+          <span class="dr-day">${day.d}</span>
+          <span class="dr-icon">${d.icon}</span>
+          <span class="dr-name" style="color:${d.color}">${day.name}</span>
+          <span class="dr-dur">${day.dur}</span>
+        </div>`;
+    });
+
+    const isOpen = wi === 0;
+    div.innerHTML = `
+      <div class="wk-header">
+        <span class="wk-num">WOCHE ${week.num}</span>
+        <span class="wk-title">${week.title}</span>
+        <span class="wk-vol">${week.vol}</span>
+        <span class="wk-chevron ${isOpen ? 'open' : ''}">▼</span>
+      </div>
+      <div class="wk-body ${isOpen ? 'open' : ''}">
+        ${daysHTML}
+      </div>`;
+
+    // Attach toggle via addEventListener to avoid any inline handler issues
+    div.querySelector('.wk-header').addEventListener('click', function(e) {
+      e.stopPropagation();
+      const body = this.nextElementSibling;
+      const ch = this.querySelector('.wk-chevron');
+      const nowOpen = body.classList.contains('open');
+      body.classList.toggle('open', !nowOpen);
+      ch.classList.toggle('open', !nowOpen);
+    });
+
+    container.appendChild(div);
+  });
+}
+
+
+
+function showDayDetail(phaseIdx, weekIdx, dayD) {
+  const week = PHASES[phaseIdx].weeks[weekIdx];
+  const workout = week.days.find(d=>d.d===dayD);
+  if(!workout) return;
+  const disc = DISC[workout.disc];
+  let intervalsHTML = '<div class="intervals">';
+  workout.intervals.forEach(iv => {
+    intervalsHTML += `<div class="interval-row">
+      <span class="ir-num">${String(iv.n).padStart(2,'0')}</span>
+      <span class="ir-desc">${iv.desc}${iv.zone?`<br><span class="ir-zone ${iv.zone}">${iv.zone.toUpperCase()}</span>`:''}</span>
+      <span class="ir-load">${iv.load}</span>
+    </div>`;
+  });
+  intervalsHTML += '</div>';
+  document.getElementById('detailModalContent').innerHTML = `
+    <div style="background:var(--panel2);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <button onclick="closeDetailModal()" style="background:none;border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:8px 14px;cursor:pointer;letter-spacing:1px;">← ZURÜCK</button>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;">WOCHE ${week.num} · ${dayD}</span>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:40px;">
+      <div class="workout-card" style="margin:12px;">
+        <div class="wc-stripe" style="background:${disc.color}"></div>
+        <div class="wc-header">
+          <span class="wc-icon">${disc.icon}</span>
+          <div class="wc-meta">
+            <div class="wc-type" style="color:${disc.color}">${disc.label}</div>
+            <div class="wc-name">${workout.name}</div>
+          </div>
+          <span class="wc-duration">${workout.dur}</span>
+        </div>
+        <div class="wc-body">
+          <div class="wc-desc">${workout.desc}</div>
+          ${intervalsHTML}
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+// =============================================
+// LOG PAGE
+// =============================================
+function addLog() {
+  const disc = document.getElementById('logDisc').value;
+  const km = parseFloat(document.getElementById('logKm').value) || 0;
+  const min = parseInt(document.getElementById('logMin').value) || 0;
+  const note = document.getElementById('logNote').value;
+  if(!disc) { showToast('DISZIPLIN WÄHLEN'); return; }
+
+  const entry = {
+    disc, km, min, note,
+    date: today().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})
+  };
+  logs.unshift(entry);
+  saveLogs();
+
+  document.getElementById('logDisc').value = '';
+  document.getElementById('logKm').value = '';
+  document.getElementById('logMin').value = '';
+  document.getElementById('logNote').value = '';
+
+  showToast('✓ GESPEICHERT!');
+  renderLogList();
+  updateStats();
+}
+
+function deleteLog(idx) {
+  if(!confirm('Einheit wirklich löschen?')) return;
+  logs.splice(idx, 1);
+  saveLogs();
+  renderLogList();
+  updateStats();
+  showToast('GELÖSCHT');
+}
+
+function editLog(idx) {
+  const l = logs[idx];
+  const d = DISC[l.disc] || DISC.rest;
+  // Fill form with existing values
+  document.getElementById('logDisc').value = l.disc;
+  document.getElementById('logKm').value = l.km || '';
+  document.getElementById('logMin').value = l.min || '';
+  document.getElementById('logNote').value = l.note || '';
+  // Remove the entry so re-saving replaces it
+  logs.splice(idx, 1);
+  saveLogs();
+  renderLogList();
+  updateStats();
+  showToast('BEARBEITEN — ERNEUT SPEICHERN');
+  // Scroll to top of log page
+  document.getElementById('page-log').scrollTo(0, 0);
+}
+
+function renderLogList() {
+  const container = document.getElementById('logList');
+  container.innerHTML = '';
+  if(!logs.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted);">NOCH KEINE EINHEITEN GELOGGT</div>';
+    updateStats();
+    return;
+  }
+  logs.slice(0,20).forEach((l, idx) => {
+    const d = DISC[l.disc] || DISC.rest;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin:0 12px 6px;border:1px solid var(--border);background:var(--panel);overflow:hidden;';
+    div.innerHTML = `
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 14px;">
+        <span style="font-size:18px;">${d.icon}</span>
+        <div>
+          <div style="font-family:var(--sans);font-size:12px;font-weight:600;">${d.label}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px;">
+            ${l.km?l.km+' km':''}${l.km&&l.min?' · ':''}${l.min?l.min+' min':''}${l.note?' · '+l.note:''}
+          </div>
+        </div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">${l.date}</span>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--border);">
+        <button onclick="editLog(${idx})" style="flex:1;padding:8px;background:none;border:none;border-right:1px solid var(--border);color:var(--yellow);font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;">✏ BEARBEITEN</button>
+        <button onclick="deleteLog(${idx})" style="flex:1;padding:8px;background:none;border:none;color:var(--red);font-family:var(--mono);font-size:9px;letter-spacing:1px;cursor:pointer;">✕ LÖSCHEN</button>
+      </div>`;
+    container.appendChild(div);
+  });
+  updateStats();
+}
+
+function updateStats() {
+  let swim=0, bike=0, run=0;
+  logs.forEach(l => {
+    if(l.disc==='swim') swim+=l.km||0;
+    if(l.disc==='bike') bike+=l.km||0;
+    if(l.disc==='run') run+=l.km||0;
+  });
+  document.getElementById('statSwimKm').textContent = swim.toFixed(1);
+  document.getElementById('statBikeKm').textContent = bike.toFixed(1);
+  document.getElementById('statRunKm').textContent = run.toFixed(1);
+}
+
+// =============================================
+// PROGRESS PAGE
+// =============================================
+function renderProgress() {
+  const total = daysBetween(START_DATE, RACE_DATE);
+  const elapsed = daysBetween(START_DATE, today());
+  const pct = Math.max(0, Math.min(100, Math.round((elapsed/total)*100)));
+  
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('progressBar').style.width = pct+'%';
+
+  // Discipline totals
+  let swim=0, bike=0, run=0, swimMin=0, bikeMin=0, runMin=0;
+  logs.forEach(l => {
+    if(l.disc==='swim'){swim+=l.km||0; swimMin+=l.min||0;}
+    if(l.disc==='bike'){bike+=l.km||0; bikeMin+=l.min||0;}
+    if(l.disc==='run'){run+=l.km||0; runMin+=l.min||0;}
+  });
+
+  const discData = [
+    { disc:'swim', label:'Schwimmen', icon:'🏊', color:'var(--swim)', km:swim, min:swimMin, goal:200, raceKm:1.9 },
+    { disc:'bike', label:'Radfahren', icon:'🚴', color:'var(--bike)', km:bike, min:bikeMin, goal:2000, raceKm:90 },
+    { disc:'run',  label:'Laufen',    icon:'🏃', color:'var(--run)',  km:run,  min:runMin,  goal:500,  raceKm:21.1 },
+  ];
+
+  const dc = document.getElementById('discBlocks');
+  dc.innerHTML = '';
+  discData.forEach(d => {
+    const pctBar = Math.min((d.km/d.goal)*100, 100);
+    const div = document.createElement('div');
+    div.className = 'discipline-block';
+    div.innerHTML = `
+      <div class="db-header">
+        <span class="db-icon">${d.icon}</span>
+        <span class="db-title">${d.label}</span>
+        <span class="db-total" style="color:${d.color}">${d.km.toFixed(1)} km</span>
+      </div>
+      <div class="db-body">
+        <div class="db-bar-track"><div class="db-bar-fill" style="width:${pctBar}%;background:${d.color}"></div></div>
+        <div class="db-stats">
+          <div><div class="db-stat-val" style="color:${d.color}">${d.km.toFixed(0)}</div><div class="db-stat-lbl">KM TOTAL</div></div>
+          <div><div class="db-stat-val">${d.min>0?Math.round(d.min/60)+'h':0}</div><div class="db-stat-lbl">STUNDEN</div></div>
+          <div><div class="db-stat-val">${d.raceKm}</div><div class="db-stat-lbl">KM RACE</div></div>
+        </div>
+      </div>`;
+    dc.appendChild(div);
+  });
+
+  // Milestones
+  const milestones = [
+    { icon:'🏊', title:'Kraul 100m am Stück', sub:'Phase 1 · Woche 3', status:'next' },
+    { icon:'🏃', title:'5 km ohne Pause', sub:'Phase 1 · Woche 5', status:'next' },
+    { icon:'🥇', title:'Sprint-Triathlon — Finisher', sub:'Juli/Aug 2026', status:'later' },
+    { icon:'🚴', title:'100 km Longrider', sub:'Phase 3', status:'later' },
+    { icon:'🏅', title:'Olympische Distanz', sub:'Phase 3', status:'later' },
+    { icon:'⚡', title:'IRONMAN 70.3 — FINISHER', sub:'Sommer 2027', status:'later' },
+  ];
+
+  const ml = document.getElementById('milestoneList');
+  ml.innerHTML = '';
+  milestones.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'ms-item';
+    div.innerHTML = `
+      <span class="ms-icon">${m.icon}</span>
+      <div class="ms-info">
+        <div class="ms-title">${m.title}</div>
+        <div class="ms-sub">${m.sub}</div>
+      </div>
+      <span class="ms-badge ${m.status}">${m.status==='done'?'✓ DONE':m.status==='next'?'NÄCHSTES ZIEL':'OFFEN'}</span>`;
+    ml.appendChild(div);
+  });
+}
+
+// =============================================
+// INIT
+// =============================================
+renderToday();
+showPhase(0);
+renderLogList();
+updateStats();
+</script>
+</body>
+</html>
