@@ -23,6 +23,8 @@ import {
 
 export interface DemoStep {
   say: string;
+  /** Preferred view while this step runs (UI hint only). */
+  view?: '3d' | 'xray';
   /** Returns true when the step is finished. `t` = time spent in this step. */
   run: (sim: SimState, inp: InputState, t: number) => boolean;
 }
@@ -169,6 +171,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: 'xray',
       say: 'Engaged. Switch to RAO 30° CRA 30° and inject contrast for the diagnostic angiogram: note the tight mid-LAD lesion and slow (TIMI 2) distal filling.',
       run: (sim, inp, t) => {
         inp.fine = false;
@@ -182,6 +185,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: '3d',
       say: 'Give heparin (G) before wiring. ACT rises from ~128 s to ~285 s.',
       run: (sim, _i, t) => {
         if (!sim.heparinGiven) giveHeparin(sim);
@@ -283,6 +287,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: 'xray',
       say: 'Centre the balloon markers on the lesion (fine positioning near the target), confirming on fluoro.',
       run: (sim, inp, t) => {
         const ok = positionCath(sim, 'balloon', inp);
@@ -292,6 +297,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: '3d',
       say: 'Inflate to 10 atm and hold ~12 s. Watch the ST segment rise and the patient report chest pain - expected during occlusion.',
       run: (sim, inp) => {
         inp.advance = 0;
@@ -337,6 +343,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: 'xray',
       say: 'Centre the stent on the lesion so both margins are about 2 mm.',
       run: (sim, inp, t) => {
         const ok = positionCath(sim, 'stent', inp);
@@ -346,6 +353,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: '3d',
       say: 'Deploy at 12 atm (Ø ≈ 3.07 mm) and hold ~12 s.',
       run: (sim, inp) => {
         inp.advance = 0;
@@ -373,6 +381,7 @@ export function makeDemo(): DemoState {
       },
     },
     {
+      view: 'xray',
       say: 'Final angiogram in RAO 30° CRA 30°: brisk TIMI 3 flow, no residual stenosis.',
       run: (sim, _i, t) => {
         if (t < 0.5) return false;

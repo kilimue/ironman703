@@ -89,6 +89,8 @@ export function stepGuide(g0: GuideState, inp: GuideInput, ctx: GuideContext): {
             g.push = 0;
             msgs.push({ level: 'warn', text: 'Too fast to seat the guide - advance gently (hold Shift).', key: 'seat-fast' });
           }
+        } else if (extra < 0.1) {
+          g.push = 0;
         } else if (facingRight(g, ctx.root)) {
           g.push = 0;
           msgs.push({

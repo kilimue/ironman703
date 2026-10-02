@@ -80,7 +80,7 @@ export function fatWeight(t: number, thetaDeg: number): number {
   const a = wrapDeg(thetaDeg - HEART.antIVGroove) / 14;
   const p = wrapDeg(thetaDeg - HEART.postIVGroove) / 16;
   const iv = (Math.exp(-a * a) + Math.exp(-p * p)) * (1 - smoothstep(0.75, 1.0, t) * 0.6);
-  const baseFat = t < 0 ? 0.35 : 0;
+  const baseFat = t < 0 ? 0.2 : 0;
   return Math.min(1, av + iv * 0.85 + baseFat);
 }
 

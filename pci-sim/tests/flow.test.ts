@@ -116,6 +116,19 @@ describe('flow in the running simulation', () => {
     expect(distalFlow(sim.flow, 'D2')).toBe(0);
     expect(distalFlow(sim.flow, 'D1')).toBe(1);
   });
+  it('transit recovers after stenting', () => {
+    const sim = simAtDemoStep(99);
+    const arr = sim.flow.LAD!.arrival;
+    const lad = sim.anat.vessels.LAD;
+    const i0 = Math.round((sim.anat.lesion.s0 - 8) / lad.ds);
+    const i1 = Math.round((sim.anat.lesion.s1 + 8) / lad.ds);
+    const i2 = Math.round((sim.anat.lesion.s1 + 28) / lad.ds);
+    const before = (arr[i0] - arr[0]) / (i0 * lad.ds);
+    const after = (arr[i2] - arr[i1]) / ((i2 - i1) * lad.ds);
+    expect(after).toBeLessThan(before * 1.3);
+    expect(sim.snapshot.timi).toBe(3);
+    expect(distalFlow(sim.flow, 'D2')).toBeGreaterThan(0.8);
+  });
   it('a dissection reduces flow until a stent seals it', () => {
     const sim = createSim();
     sim.dissections.push({ id: 99, vessel: 'LAD', s0: 36, s1: 46, cause: 'balloon', at: 0, sealed: false, stain: 0.5 });

@@ -2,7 +2,7 @@
  * Simulation core: one mutable SimState advanced by stepSim(). No Three.js / DOM.
  * Sizing, flow, scoring and stage logic live in pure helper modules; this file wires them together.
  */
-import { AORTA, CONTRAST, FLOW, FLUORO, GUIDE, PHYSIOLOGY, TREATMENT, WIRE, BALLOON, STENT } from '../config/anatomy';
+import { AORTA, CONTRAST, FLOW, FLUORO, PHYSIOLOGY, TREATMENT, BALLOON, STENT } from '../config/anatomy';
 import { buildAnatomy, type Anatomy, type VesselId, CORONARY_IDS, idxAt } from '../anatomy/vesselTree';
 import { computeLumen, type LumenTreatment, measureQCA, type QCA } from '../anatomy/lumen';
 import { accessPath, rangesOnPath, type Path } from '../physics/route';
@@ -26,6 +26,7 @@ import { makePhysiology, stepPhysiology, type PhysState } from '../physics/physi
 import type { Msg } from '../physics/messages';
 import { makeRng, wrapDeg, clamp } from '../math/vec3';
 import { TOOLS, toolLock, type ToolId } from '../tools/tools';
+import { deviceCommand } from '../tools/controller';
 import { buildSnapshot, type Snapshot } from './snapshot';
 import { makeStageProgress, progressStages, type StageProgress } from './stages';
 
@@ -221,9 +222,18 @@ export function createSim(seed = 20240917): SimState {
 
 // ------------------------------------------------------------------ messaging
 
+const lastLogged = new WeakMap<SimState, Map<string, number>>();
+
 export function say(sim: SimState, m: Msg, log = true) {
   sim.outbox.push(m);
-  if (log && (m.level !== 'info' || !m.key)) sim.log.push({ t: sim.t, text: m.text, level: m.level });
+  if (!log || (m.level === 'info' && m.key)) return;
+  let seen = lastLogged.get(sim);
+  if (!seen) lastLogged.set(sim, (seen = new Map()));
+  const k = m.key ?? m.text;
+  const prev = seen.get(k);
+  seen.set(k, sim.t);
+  if (prev !== undefined && sim.t - prev < 5) return;
+  sim.log.push({ t: sim.t, text: m.text, level: m.level });
 }
 function logOnly(sim: SimState, text: string, level: Msg['level'] = 'info') {
   sim.log.push({ t: sim.t, text, level });
@@ -573,25 +583,9 @@ export function endCase(sim: SimState) {
 /** Device controller: turn input into movement of the active device. */
 function controlDevices(sim: SimState, input: InputState, dt: number) {
   const tool = sim.tool;
-  const speeds: Record<string, [number, number, number, number]> = {
-    guide: [GUIDE.speed, GUIDE.fineSpeed, GUIDE.rotateSpeed, GUIDE.fineRotateSpeed],
-    wire: [WIRE.speed, WIRE.fineSpeed, WIRE.rotateSpeed, WIRE.fineRotateSpeed],
-    balloon: [BALLOON.speed, BALLOON.fineSpeed, 0, 0],
-    stent: [STENT.speed, STENT.fineSpeed, 0, 0],
-  };
-  const sp = speeds[tool];
-  let delta = 0;
-  let dRot = 0;
-  if (sp) {
-    const v = input.fine ? sp[1] : sp[0];
-    const wheelStep = clamp(sim.wheel, -v * dt, v * dt);
-    sim.wheel -= wheelStep;
-    delta = clamp(input.advance, -1, 1) * v * dt + wheelStep;
-    delta = clamp(delta, -v * dt, v * dt);
-    dRot = clamp(input.rotate, -1, 1) * (input.fine ? sp[3] : sp[2]) * dt;
-  } else {
-    sim.wheel = 0;
-  }
+  const cmd = deviceCommand(tool, input, sim.wheel, dt);
+  sim.wheel = cmd.wheelLeft;
+  const { delta, dRot } = cmd;
   const wireIsOut = sim.wire.pos > 0;
   const cathOut = isOut(sim.balloon) || isOut(sim.stent);
 

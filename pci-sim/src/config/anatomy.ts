@@ -205,21 +205,23 @@ export const FLUORO = {
   /** Linear attenuation-like coefficients per mm (teaching values). */
   muContrast: 0.55,
   muVesselWall: 0.004,
-  muHeart: 0.0028,
-  muSpine: 0.012,
+  muHeart: 0.0048,
+  muSpine: 0.0085,
   muRib: 0.03,
   muDiaphragm: 0.004,
   muSoftTissue: 0.0012,
   muBone: 0.02,
   muGuide: 0.35,
-  muWireBody: 0.5,
-  muWireTip: 2.4,
+  muWireBody: 0.28,
+  muWireTip: 1.6,
   muMarker: 1.6,
   muStent: 0.22,
   noise: 0.07,
   cineNoise: 0.035,
   blur: 0.9,
-  collimation: 0.94,
+  collimation: 0.86,
+  /** Image centre shifted up by this fraction of the screen height. */
+  imageShift: 0.07,
   /** Background brightness of an unattenuated pixel. */
   background: 0.9,
   presets: [
@@ -240,12 +242,12 @@ export const CONTRAST = {
   selectiveMl: 8,
   aorticMl: 20,
   /** Bolus duration (s) - how long dye keeps arriving at a ring after the front. */
-  bolusSelective: 1.6,
-  bolusAortic: 1.2,
+  bolusSelective: 2.6,
+  bolusAortic: 1.8,
   /** Contrast intensity in coronaries during an aortic flush. */
   aorticCoronaryIntensity: 0.5,
   /** Reflux intensity into the aortic root during a selective injection. */
-  refluxIntensity: 0.28,
+  refluxIntensity: 0.06,
   refluxLength: 45,
   minCine: 3,
   maxCine: 9,
