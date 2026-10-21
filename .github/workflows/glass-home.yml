@@ -1,0 +1,52 @@
+name: Glass Home APK
+
+on:
+  push:
+    paths:
+      - "tv-launcher/**"
+      - ".github/workflows/glass-home.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tv-launcher
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: APK bauen
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: APK umbenennen
+        run: cp app/build/outputs/apk/release/app-release.apk GlassHome.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GlassHome-apk
+          path: tv-launcher/GlassHome.apk
+
+      - name: Als Download veröffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: glasshome
+          name: Glass Home (TV-Launcher)
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          make_latest: false
+          files: tv-launcher/GlassHome.apk
+          body: |
+            Neueste Version von Glass Home für Android TV / Google TV.
+            Direkt-Link für die Downloader-App am TV:
+            https://github.com/${{ github.repository }}/releases/download/glasshome/GlassHome.apk
